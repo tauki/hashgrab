@@ -88,5 +88,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ./hashgrab-linux-amd64
+          token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
