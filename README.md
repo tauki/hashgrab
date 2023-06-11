@@ -10,6 +10,23 @@ HashGrab is a concurrent URL fetcher and MD5 hasher written in Go. Given a list 
 
 ## Installation
 
+### Prebuilt Binary
+If you are using a Linux AMD64 system, you can download the precompiled binary from the [Releases](https://github.com/tauki/hashgrab/releases) section instead of building from source.
+
+Once downloaded, you can either move the binary to a directory in your PATH, or run it directly from the download location.
+
+To move the binary to `/usr/local/bin`, use the following command:
+
+```bash
+mv /path/to/downloaded/binary /usr/local/bin/hashgrab
+```
+
+Make sure to replace `/path/to/downloaded/binary` with the actual path where the binary was downloaded.
+
+To run the binary directly from the download location, you may need to make it executable first using `chmod +x /path/to/downloaded/binary`.
+
+You do not need to have Go installed to use the precompiled binary.
+
 ### Build from Source
 
 1. Clone this repository:
