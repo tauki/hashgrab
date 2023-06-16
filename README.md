@@ -1,6 +1,8 @@
 # HashGrab
 
-![release](https://github.com/tauki/hashgrab/actions/workflows/test.yml/badge.svg)
+[![release](https://github.com/tauki/hashgrab/actions/workflows/main.yml/badge.svg)](https://github.com/tauki/hashgrab/actions/workflows/main.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/tauki/hashgrab.svg)](https://pkg.go.dev/github.com/tauki/hashgrab)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tauki/hashgrab)](https://goreportcard.com/report/github.com/tauki/hashgrab)
 
 HashGrab is a concurrent URL fetcher and MD5 hasher written in Go. Given a list of URLs, it fetches the contents of these URLs and computes their MD5 hash. The tool allows you to control the maximum number of concurrent requests, making it highly efficient in fetching and hashing multiple URLs.
 
