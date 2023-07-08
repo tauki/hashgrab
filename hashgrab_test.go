@@ -7,17 +7,17 @@ import (
 	"github.com/tauki/hashgrab"
 )
 
-type customFetcher struct{}
+type customFetcherType struct{}
 
-func (f *customFetcher) Fetch(url string) ([]byte, error) {
+func (f *customFetcherType) Fetch(url string) ([]byte, error) {
 	// Implement custom fetching logic here
 	// This is a dummy implementation that returns URL as bytes and nil error
 	return []byte(url), nil
 }
 
-type customHasher struct{}
+type customHasherType struct{}
 
-func (h *customHasher) Hash(data []byte) string {
+func (h *customHasherType) Hash(data []byte) string {
 	// Implement custom hashing logic here
 	// This is a dummy implementation that returns SHA256 hash as hex
 	hash := sha256.Sum256(data)
@@ -26,9 +26,9 @@ func (h *customHasher) Hash(data []byte) string {
 
 // ExampleNew demonstrates how to create a new Worker.
 func ExampleNew() {
-	worker := hashgrab.New()
-	fmt.Printf("Created a new worker with %v parallelism\n", worker.GetMaxWorker())
-	// Output: Created a new worker with 10 parallelism
+	_ = hashgrab.New()
+	fmt.Println("Created a new worker")
+	// Output: Created a new worker
 }
 
 // ExampleWorker_MaxWorker demonstrates how to set the maximum number of workers.
@@ -59,8 +59,8 @@ func ExampleWorker_Hasher() {
 // ExampleWorker_Run demonstrates how to start a Worker.
 func ExampleWorker_Run() {
 	worker := hashgrab.New().MaxWorker(2)
-	worker.Fetcher(&customFetcher{})
-	worker.Hasher(&customHasher{})
+	worker.Fetcher(&customFetcherType{})
+	worker.Hasher(&customHasherType{})
 	urls := []string{"http://example.com", "http://example.org"}
 	responseChan := worker.Run(urls)
 

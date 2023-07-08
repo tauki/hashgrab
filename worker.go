@@ -13,8 +13,8 @@ type Worker struct {
 	fetcher Fetcher
 	// hasher is the interface for hashing the fetched data.
 	hasher Hasher
-	// WaitGroup is embedded to track completion of all fetch and hash operations.
-	sync.WaitGroup
+	// wg is the WaitGroup used to wait for all fetch and hash operations to complete.
+	wg sync.WaitGroup
 }
 
 // Response struct represents the result of a fetch and hash operation.
@@ -73,13 +73,13 @@ func (w *Worker) Run(urls []string) chan *Response {
 		// Loop over the URLs.
 		for _, url := range urls {
 			// For each URL, add to the wait group and acquire a semaphore.
-			w.Add(1)
+			w.wg.Add(1)
 			sem.Acquire()
 			// Start the process in a separate goroutine.
 			go w.process(url, ch, sem)
 		}
 		// Wait for all operations to complete.
-		w.Wait()
+		w.wg.Wait()
 	}()
 
 	// Return the results channel.
@@ -92,7 +92,7 @@ func (w *Worker) process(url string, ch chan *Response, sem *Semaphore) {
 	defer func() {
 		// Release the semaphore and signal completion to the wait group when done.
 		sem.Release()
-		w.Done()
+		w.wg.Done()
 	}()
 
 	// Fetch data from the URL.
