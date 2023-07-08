@@ -90,3 +90,7 @@ hashgrab -parallel=10 https://example.com https://another-example.com
 ```
 
 This will fetch `https://example.com` and `https://another-example.com` in parallel (with a maximum of 10 parallel requests).
+
+## Using as a Library
+
+HashGrab can also be used as a library in your Go programs. Follow the GoDoc link at the top of this README for instructions on how to use the library.

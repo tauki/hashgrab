@@ -41,6 +41,11 @@ func (w *Worker) MaxWorker(n int) *Worker {
 	return w
 }
 
+// GetMaxWorker returns the maximum number of workers.
+func (w *Worker) GetMaxWorker() int {
+	return w.parallel
+}
+
 // Fetcher sets the fetcher implementation to fetcher and returns the updated Worker.
 func (w *Worker) Fetcher(fetcher Fetcher) *Worker {
 	w.fetcher = fetcher
