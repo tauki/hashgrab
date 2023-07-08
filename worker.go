@@ -1,5 +1,3 @@
-// Package hashgrab (in this file) provides an implementation of a worker that can
-// fetch and hash contents from a list of URLs concurrently.
 package hashgrab
 
 import (

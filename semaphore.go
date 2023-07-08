@@ -1,5 +1,3 @@
-// Package hashgrab (in this file) provides a basic implementation of a counting semaphore
-// for managing concurrency. It is used in worker.go to limit the number of concurrent.
 package hashgrab
 
 // Semaphore is a simple implementation of a counting semaphore using a channel.

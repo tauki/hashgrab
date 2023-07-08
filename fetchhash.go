@@ -1,5 +1,3 @@
-// Package hashgrab (in this file) provides functionality for fetching data from a URL and hashing it.
-// It is used in worker.go to fetch data from URLs and hash it.
 package hashgrab
 
 import (
