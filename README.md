@@ -93,4 +93,4 @@ This will fetch `https://example.com` and `https://another-example.com` in paral
 
 ## Using as a Library
 
-HashGrab can also be used as a library in your Go programs. Follow the GoDoc link at the top of this README for instructions on how to use the library.
+HashGrab can also be used as a library in your Go programs. Follow the `Go Reference` link at the top of this README for instructions on how to use the library.
