@@ -1,6 +1,7 @@
 package hashgrab_test
 
 import (
+	"context"
 	"fmt"
 
 	"crypto/sha256"
@@ -9,7 +10,7 @@ import (
 
 type customFetcherType struct{}
 
-func (f *customFetcherType) Fetch(url string) ([]byte, error) {
+func (f *customFetcherType) Fetch(ctx context.Context, url string) ([]byte, error) {
 	// Implement custom fetching logic here
 	// This is a dummy implementation that returns URL as bytes and nil error
 	return []byte(url), nil

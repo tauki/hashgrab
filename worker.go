@@ -1,6 +1,8 @@
 package hashgrab
 
 import (
+	"context"
+	"fmt"
 	"runtime"
 	"sync"
 )
@@ -13,8 +15,6 @@ type Worker struct {
 	fetcher Fetcher
 	// hasher is the interface for hashing the fetched data.
 	hasher Hasher
-	// wg is the WaitGroup used to wait for all fetch and hash operations to complete.
-	wg sync.WaitGroup
 }
 
 // Response struct represents the result of a fetch and hash operation.
@@ -31,12 +31,15 @@ func New() *Worker {
 	return &Worker{
 		parallel: runtime.NumCPU(),
 		fetcher:  NewFetcher(),
-		hasher:   NewMD5Hasher(),
+		hasher:   NewSHA256Hasher(),
 	}
 }
 
 // MaxWorker sets the maximum number of workers to n and returns the updated Worker.
 func (w *Worker) MaxWorker(n int) *Worker {
+	if n <= 0 {
+		panic("hashgrab: max worker must be greater than zero")
+	}
 	w.parallel = n
 	return w
 }
@@ -61,10 +64,17 @@ func (w *Worker) Hasher(hasher Hasher) *Worker {
 // Run starts fetching and hashing operation on the provided list of urls.
 // It returns a channel of Response where the results of the operations are sent.
 func (w *Worker) Run(urls []string) chan *Response {
+	return w.RunContext(context.Background(), urls)
+}
+
+// RunContext starts fetching and hashing operation on the provided list of urls respecting the given context.
+// It returns a channel of Response where the results of the operations are sent.
+func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
 	// Channel to collect the results.
 	ch := make(chan *Response)
 	// Semaphore to limit the number of concurrent operations.
 	sem := NewSemaphore(w.parallel)
+	var wg sync.WaitGroup
 
 	// Start a goroutine to manage the operations.
 	go func() {
@@ -72,14 +82,28 @@ func (w *Worker) Run(urls []string) chan *Response {
 		defer close(ch)
 		// Loop over the URLs.
 		for _, url := range urls {
+			if err := ctx.Err(); err != nil {
+				ch <- &Response{
+					Url:   url,
+					Error: fmt.Errorf("context cancelled before fetch: %w", err),
+				}
+				break
+			}
 			// For each URL, add to the wait group and acquire a semaphore.
-			w.wg.Add(1)
-			sem.Acquire()
+			wg.Add(1)
+			if err := sem.Acquire(ctx); err != nil {
+				ch <- &Response{
+					Url:   url,
+					Error: fmt.Errorf("acquire worker: %w", err),
+				}
+				wg.Done()
+				break
+			}
 			// Start the process in a separate goroutine.
-			go w.process(url, ch, sem)
+			go w.process(ctx, url, ch, sem, &wg)
 		}
 		// Wait for all operations to complete.
-		w.wg.Wait()
+		wg.Wait()
 	}()
 
 	// Return the results channel.
@@ -88,15 +112,15 @@ func (w *Worker) Run(urls []string) chan *Response {
 
 // process is a helper function that fetches and hashes data from a URL,
 // sends the result on a channel and releases a semaphore.
-func (w *Worker) process(url string, ch chan *Response, sem *Semaphore) {
+func (w *Worker) process(ctx context.Context, url string, ch chan *Response, sem *Semaphore, wg *sync.WaitGroup) {
 	defer func() {
 		// Release the semaphore and signal completion to the wait group when done.
 		sem.Release()
-		w.wg.Done()
+		wg.Done()
 	}()
 
 	// Fetch data from the URL.
-	data, err := w.fetcher.Fetch(url)
+	data, err := w.fetcher.Fetch(ctx, url)
 	if err != nil {
 		// Send an error response and return if fetching failed.
 		ch <- &Response{
