@@ -179,11 +179,7 @@ func TestWorker_RunContextCanceled(t *testing.T) {
 	cancel()
 
 	out := worker.Fetcher(getMockFetcher()).Hasher(getMockHasher()).RunContext(ctx, []string{"http://example.com"})
-	resp := <-out
-	if resp.Error == nil {
-		t.Fatalf("expected error due to cancellation")
-	}
-	if resp.Hash != "" {
-		t.Fatalf("expected no hash, got %q", resp.Hash)
+	if resp, ok := <-out; ok {
+		t.Fatalf("expected channel to close without response, got %+v", resp)
 	}
 }

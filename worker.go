@@ -2,7 +2,6 @@ package hashgrab
 
 import (
 	"context"
-	"fmt"
 	"runtime"
 	"sync"
 )
@@ -83,23 +82,17 @@ func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
 		// Loop over the URLs.
 		for _, url := range urls {
 			if err := ctx.Err(); err != nil {
-				ch <- &Response{
-					Url:   url,
-					Error: fmt.Errorf("context cancelled before fetch: %w", err),
-				}
 				break
 			}
-			// For each URL, add to the wait group and acquire a semaphore.
-			wg.Add(1)
 			if err := sem.Acquire(ctx); err != nil {
-				ch <- &Response{
-					Url:   url,
-					Error: fmt.Errorf("acquire worker: %w", err),
-				}
-				wg.Done()
 				break
 			}
-			// Start the process in a separate goroutine.
+			if err := ctx.Err(); err != nil {
+				sem.Release()
+				break
+			}
+			// For each URL, add to the wait group and start the process in a separate goroutine.
+			wg.Add(1)
 			go w.process(ctx, url, ch, sem, &wg)
 		}
 		// Wait for all operations to complete.
