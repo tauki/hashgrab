@@ -79,6 +79,7 @@ func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
 	go func() {
 		// Close the results channel when all operations are done.
 		defer close(ch)
+		var started bool
 		// Loop over the URLs.
 		for _, url := range urls {
 			if err := ctx.Err(); err != nil {
@@ -93,7 +94,11 @@ func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
 			}
 			// For each URL, add to the wait group and start the process in a separate goroutine.
 			wg.Add(1)
+			started = true
 			go w.process(ctx, url, ch, sem, &wg)
+		}
+		if !started {
+			return
 		}
 		// Wait for all operations to complete.
 		wg.Wait()

@@ -23,12 +23,15 @@ func NewSemaphore(limit int) *Semaphore {
 // Acquire acquires a unit of resource.
 // If all units of the resource are occupied, Acquire blocks until a unit becomes free or the context is cancelled.
 func (s *Semaphore) Acquire(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	// Writing to the 'sem' channel represents acquiring a unit of resource.
 	select {
-	case <-ctx.Done():
-		return ctx.Err()
 	case s.sem <- struct{}{}:
 		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 
