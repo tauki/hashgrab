@@ -28,10 +28,10 @@ func (s *Semaphore) Acquire(ctx context.Context) error {
 	}
 	// Writing to the 'sem' channel represents acquiring a unit of resource.
 	select {
-	case s.sem <- struct{}{}:
-		return nil
 	case <-ctx.Done():
 		return ctx.Err()
+	case s.sem <- struct{}{}:
+		return nil
 	}
 }
 

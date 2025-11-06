@@ -82,14 +82,7 @@ func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
 		var started bool
 		// Loop over the URLs.
 		for _, url := range urls {
-			if err := ctx.Err(); err != nil {
-				break
-			}
 			if err := sem.Acquire(ctx); err != nil {
-				break
-			}
-			if err := ctx.Err(); err != nil {
-				sem.Release()
 				break
 			}
 			// For each URL, add to the wait group and start the process in a separate goroutine.
