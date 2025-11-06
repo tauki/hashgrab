@@ -69,35 +69,22 @@ func (w *Worker) Run(urls []string) chan *Response {
 // RunContext starts fetching and hashing operation on the provided list of urls respecting the given context.
 // It returns a channel of Response where the results of the operations are sent.
 func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
-	// Channel to collect the results.
 	ch := make(chan *Response)
-	// Semaphore to limit the number of concurrent operations.
 	sem := NewSemaphore(w.parallel)
 	var wg sync.WaitGroup
 
-	// Start a goroutine to manage the operations.
 	go func() {
-		// Close the results channel when all operations are done.
 		defer close(ch)
-		var started bool
-		// Loop over the URLs.
 		for _, url := range urls {
 			if err := sem.Acquire(ctx); err != nil {
 				break
 			}
-			// For each URL, add to the wait group and start the process in a separate goroutine.
 			wg.Add(1)
-			started = true
 			go w.process(ctx, url, ch, sem, &wg)
 		}
-		if !started {
-			return
-		}
-		// Wait for all operations to complete.
 		wg.Wait()
 	}()
 
-	// Return the results channel.
 	return ch
 }
 
@@ -105,24 +92,19 @@ func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
 // sends the result on a channel and releases a semaphore.
 func (w *Worker) process(ctx context.Context, url string, ch chan *Response, sem *Semaphore, wg *sync.WaitGroup) {
 	defer func() {
-		// Release the semaphore and signal completion to the wait group when done.
 		sem.Release()
 		wg.Done()
 	}()
 
-	// Fetch data from the URL.
 	data, err := w.fetcher.Fetch(ctx, url)
 	if err != nil {
-		// Send an error response and return if fetching failed.
 		ch <- &Response{
 			Url:   url,
 			Error: err,
 		}
 		return
 	}
-	// Hash the fetched data.
 	hash := w.hasher.Hash(data)
-	// Send the successful response.
 	ch <- &Response{
 		Url:  url,
 		Hash: hash,
