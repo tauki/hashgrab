@@ -2,6 +2,7 @@ package hashgrab
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"sync"
 )
@@ -75,8 +76,15 @@ func (w *Worker) RunContext(ctx context.Context, urls []string) chan *Response {
 
 	go func() {
 		defer close(ch)
-		for _, url := range urls {
+		for i, url := range urls {
 			if err := sem.Acquire(ctx); err != nil {
+				respErr := fmt.Errorf("acquire worker: %w", err)
+				for _, remaining := range urls[i:] {
+					ch <- &Response{
+						Url:   remaining,
+						Error: respErr,
+					}
+				}
 				break
 			}
 			wg.Add(1)
