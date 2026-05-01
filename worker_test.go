@@ -1,25 +1,26 @@
 package hashgrab
 
 import (
+	"context"
 	"errors"
 	"runtime"
 	"testing"
 )
 
 type mockFetcher struct {
-	FetchFunc func(string) ([]byte, error)
+	FetchFunc func(context.Context, string) ([]byte, error)
 }
 
-func (m mockFetcher) Fetch(url string) ([]byte, error) {
+func (m mockFetcher) Fetch(ctx context.Context, url string) ([]byte, error) {
 	if m.FetchFunc != nil {
-		return m.FetchFunc(url)
+		return m.FetchFunc(ctx, url)
 	}
 	return []byte{}, nil
 }
 
 func getMockFetcher() Fetcher {
 	return mockFetcher{
-		FetchFunc: func(url string) ([]byte, error) {
+		FetchFunc: func(ctx context.Context, url string) ([]byte, error) {
 			return []byte("testdata"), nil
 		},
 	}
@@ -52,8 +53,8 @@ func TestWorker_New(t *testing.T) {
 	if _, ok := worker.fetcher.(*httpFetcher); !ok {
 		t.Errorf("expected fetcher to be of type *httpFetcher, got %T", worker.fetcher)
 	}
-	if _, ok := worker.hasher.(md5Hasher); !ok {
-		t.Errorf("expected hasher to be of type md5Hasher, got %T", worker.hasher)
+	if _, ok := worker.hasher.(sha256Hasher); !ok {
+		t.Errorf("expected hasher to be of type sha256Hasher, got %T", worker.hasher)
 	}
 }
 
@@ -63,6 +64,16 @@ func TestWorker_MaxWorker(t *testing.T) {
 	if worker.parallel != 5 {
 		t.Errorf("expected parallel to be %d, got %d", 5, worker.parallel)
 	}
+}
+
+func TestWorker_MaxWorkerInvalid(t *testing.T) {
+	worker := New()
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatalf("expected panic when setting non-positive worker count")
+		}
+	}()
+	worker.MaxWorker(0)
 }
 
 func TestWorker_Fetcher(t *testing.T) {
@@ -127,7 +138,7 @@ func TestWorker_Run(t *testing.T) {
 			name: "Fetch Error",
 			urls: []string{"http://example.com"},
 			fetcher: mockFetcher{
-				FetchFunc: func(url string) ([]byte, error) {
+				FetchFunc: func(ctx context.Context, url string) ([]byte, error) {
 					return nil, errors.New("fetch error")
 				},
 			},
@@ -159,5 +170,30 @@ func TestWorker_Run(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestWorker_RunContextCanceled(t *testing.T) {
+	worker := New()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	out := worker.Fetcher(getMockFetcher()).Hasher(getMockHasher()).RunContext(ctx, []string{"http://example.com"})
+
+	resp, ok := <-out
+	if !ok {
+		t.Fatalf("expected cancellation response")
+	}
+	if resp.Url != "http://example.com" {
+		t.Fatalf("expected URL %q, got %q", "http://example.com", resp.Url)
+	}
+	if resp.Error == nil {
+		t.Fatalf("expected error due to cancellation")
+	}
+	if !errors.Is(resp.Error, context.Canceled) {
+		t.Fatalf("expected context cancellation error, got %v", resp.Error)
+	}
+	if _, ok := <-out; ok {
+		t.Fatalf("expected channel to close after single response")
 	}
 }

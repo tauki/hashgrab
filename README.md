@@ -4,7 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/tauki/hashgrab.svg)](https://pkg.go.dev/github.com/tauki/hashgrab)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tauki/hashgrab)](https://goreportcard.com/report/github.com/tauki/hashgrab)
 
-HashGrab is a concurrent URL fetcher and MD5 hasher written in Go. Given a list of URLs, it fetches the contents of these URLs and computes their MD5 hash. The tool allows you to control the maximum number of concurrent requests, making it highly efficient in fetching and hashing multiple URLs.
+HashGrab is a concurrent URL fetcher and content hasher written in Go. Given a list of URLs, it fetches the contents of these URLs and computes their hashes (SHA-256 by default, with pluggable hashing so you can supply alternatives such as MD5). The tool allows you to control the maximum number of concurrent requests, making it highly efficient in fetching and hashing multiple URLs.
 
 ## Requirements
 
@@ -69,24 +69,25 @@ This command will install the `hashgrab` binary in your `GOBIN` or `GOPATH/bin` 
 
 ## Usage
 
-HashGrab fetches URLs and calculates their MD5 hashes. The tool takes a list of URLs as command-line arguments.
+HashGrab fetches URLs and calculates their hashes. By default, hashes are generated using SHA-256, but you can switch to MD5 using the `-hash` flag. The tool takes a list of URLs as command-line arguments.
 
 ```bash
 hashgrab https://example.com https://another-example.com
 ```
 
-This will fetch `https://example.com` and `https://another-example.com`, and print their MD5 hashes to the standard output.
+This will fetch `https://example.com` and `https://another-example.com`, and print their hashes (SHA-256 by default) to the standard output.
 
 ### Flags
 
 HashGrab supports the following flags:
 
 - `-parallel=<number>`: Specifies the maximum number of parallel requests to fetch URLs. Defaults to 10 if not provided.
+- `-hash=<algorithm>`: Selects the hashing algorithm. Valid values are `sha256` (default) and `md5` for the bundled CLI, while library consumers can provide any custom hasher implementation.
 
 Example:
 
 ```bash
-hashgrab -parallel=10 https://example.com https://another-example.com
+hashgrab -parallel=10 -hash=md5 https://example.com https://another-example.com
 ```
 
 This will fetch `https://example.com` and `https://another-example.com` in parallel (with a maximum of 10 parallel requests).
